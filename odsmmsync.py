@@ -4,12 +4,10 @@ from shutil import copy2
 
 # user section === defaults === modify as needed =========================================
 databasefile='/var/opendnssec/kasp.db'
-#proxyServer = 'mmcentral.example.com'
-proxyServer = '172.22.1.27'
+proxyServer = 'mmcentral.example.com'
 centralServer=proxyServer
 username='administrator'
-#password='administrator'
-password='menandmice'
+password='administrator'
 thisServerName='dns1.example.com' #the name of the server as named in Men and Mice
 defaultPolicy=u'default'
 theSourceDir = '/var/named/hosts/masters/'
