@@ -4,10 +4,12 @@ from shutil import copy2
 
 # user section === defaults === modify as needed =========================================
 databasefile='/var/opendnssec/kasp.db'
-proxyServer = 'mmcentral.example.com'
+#proxyServer = 'mmcentral.example.com'
+proxyServer = '172.22.1.27'
 centralServer=proxyServer
 username='administrator'
-password='administrator'
+#password='administrator'
+password='menandmice'
 thisServerName='dns1.example.com' #the name of the server as named in Men and Mice
 defaultPolicy=u'default'
 theSourceDir = '/var/named/hosts/masters/'
@@ -24,7 +26,6 @@ odsksmutil = '/usr/local/bin/ods-ksmutil'
 # ========================================================================================
 theScriptDir = '/var/named/scripts/' #careful: all scripts must be here, including the reloadscript.sh
 theSlaveServersListFile = theScriptDir + 'nameservers.lst' #careful: must be changed in the reload script as well
-
 
 thisViewName = '' #the name of the view, empty string for non-views setup (currently, only '' is supported)
 sqlstatement='select z.name as zone,p.name as policy from zones as z join policies as p on p.id=z.policy_id;'
@@ -254,16 +255,20 @@ for exZone,exPolicy in existingPolicies.iteritems():
 
 #regenerate list of notify servers
 dnsServers = cli.GetDNSServers().dnsServers.dnsServer
-serverFile = open(theSlaveServersListFile,'w')
+
 serverAddresses = []
 for server in dnsServers:
 	if server.name.rstrip('.') != thisServerName.rstrip('.') and 'resolvedAddress' in server and server.resolvedAddress not in serverAddresses:
 		serverAddresses.append(server.resolvedAddress)
-		serverFile.write(server.resolvedAddress + '\n')
-serverFile.close()
-writeToSyslog('Regenerated list of slave servers to ' + theSlaveServersListFile)
-
-
+if len(serverAddresses) > 0:
+        serverFile = open(theSlaveServersListFile,'w')
+        for serveraddr in serverAddresses:
+                serverFile.write(serveraddr + '\n')                
+        serverFile.close()
+        writeToSyslog('Regenerated list of slave servers to ' + theSlaveServersListFile)
+else:
+        os.unlink(theSlaveServersListFile)
+        writeToSyslog('WARNING: no slave servers found in configuration')
 
 #regenerate custom fields in Men and Mice with current policies
 conn = sqlite3.connect(databasefile)
