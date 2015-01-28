@@ -1,3 +1,6 @@
+Last tested: 28.01.2015 with OpenDNSSEC 1.4.6, Men & Mice Suite 6.7.5
+on MacOS X 10.9 with BIND 9.10.1-P1
+
 odsmmsync.py:
 
 This is a sync-script for syncing an OpenDNSSEC server running on a
