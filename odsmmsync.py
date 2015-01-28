@@ -1,13 +1,14 @@
+#! env python2
 import sqlite3,sys,os,soapCLI,syslog,re,datetime
 from shutil import copy2
 
 # user section === defaults === modify as needed =========================================
 databasefile='/var/opendnssec/kasp.db'
-proxyServer = 'central.mmtest.net'
+proxyServer = 'mmcentral.example.com'
 centralServer=proxyServer
 username='administrator'
 password='administrator'
-thisServerName='dnssec.mmtest.net' #the name of the server as named in Men and Mice
+thisServerName='dns1.example.com' #the name of the server as named in Men and Mice
 defaultPolicy=u'default'
 theSourceDir = '/var/named/hosts/masters/'
 theDestDir = '/var/opendnssec/signed/'
@@ -210,8 +211,12 @@ conn.close()
 cli = soapCLI.mmSoap(proxy=proxyServer,server=centralServer,username=username,password=password)
 cli.SetCurrentAddressSpace(addressSpaceRef='<Default>')
 thisAuthority = thisServerName.rstrip('.') + '.'
-dnssecZones = cli.GetDNSZones(filter=DNSSECMMPropName + ':1 authority:' + thisAuthority)
+dnssecZones = cli.GetDNSZones(filter= DNSSECMMPropName + ':1 authority:' + thisAuthority)
 dnssecZones = dnssecZones.dnsZones.dnsZone if dnssecZones.dnsZones else []
+
+# filter DNSSEC property in case the SOAP filter failes
+# TODO: check why the SOAP filter sometimes fails
+dnssecZones = [z for z in dnssecZones if getPropertyValue(z.customProperties,DNSSECMMPropName) == '1']
 
 mmPolicies = {}
 for zone in dnssecZones:
