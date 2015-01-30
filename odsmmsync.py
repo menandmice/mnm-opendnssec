@@ -27,8 +27,9 @@ Version: 1.2
 Date: 2015-01-30
 """
 
-import sqlite3,sys,os,soapCLI,syslog,re,datetime
+import sqlite3,sys,os,soapCLI,syslog,re,datetime,ConfigParser
 from shutil import copy2
+
 
 # user section === defaults === modify as needed =========================================
 databasefile='/var/opendnssec/kasp.db'
@@ -218,116 +219,108 @@ def dateStrToInt (dateStr,defaultVal):
 
 def intToDateStr (theInt):
 	return datetime.datetime.strptime(str(theInt),'%Y%m%d%H%M%S').strftime('%Y-%m-%d %H:%M:%S') if theInt else ''
+
+
+if __name__ == "__main__":
+        config = ConfigParser.ConfigParser()
+        config.read('odsmmsync.cfg')
+
+        #fetch existing opendnssec zones
+        conn = sqlite3.connect(databasefile)
+        c = conn.cursor()
+
+        existingPolicies = {}
+        c.execute(sqlstatement)
+        for row in c:
+                existingPolicies[row[0]] = row[1]
+
+        c.close()
+        conn.close()
+
+        #fetch Men and Mice DNSSEC marked zones
+        cli = soapCLI.mmSoap(proxy=proxyServer,server=centralServer,username=username,password=password)
+        cli.SetCurrentAddressSpace(addressSpaceRef='<Default>')
+        thisAuthority = thisServerName.rstrip('.') + '.'
+        dnssecZones = cli.GetDNSZones(filter= DNSSECMMPropName + ':1 authority:' + thisAuthority)
+        dnssecZones = dnssecZones.dnsZones.dnsZone if dnssecZones.dnsZones else []
+
+        # filter DNSSEC property in case the SOAP filter failes
+        # TODO: check why the SOAP filter sometimes fails
+        dnssecZones = [z for z in dnssecZones if getPropertyValue(z.customProperties,DNSSECMMPropName) == '1']
+
+        mmPolicies = {}
+        for zone in dnssecZones:
+                policy=getPropertyValue(zone.customProperties,PolicyMMPropName) if zone.customProperties else None
+                mmPolicies[zone.name.rstrip('.')]=policy.strip() if policy is not None else defaultPolicy
 	
-	
-	
-#fetch existing opendnssec zones
-conn = sqlite3.connect(databasefile)
-c = conn.cursor()
+        #echo all what was found here
+        theString  = 'Policies in Men and Mice:' if len(mmPolicies)>0 else 'No DNSSEC zones in Men and Mice' 
+        writeToSyslog(theString)
+        for mmZone,mmPolicy in mmPolicies.iteritems():
+                writeToSyslog('  ' + mmZone + ': ' + mmPolicy) 
 
-existingPolicies = {}
-c.execute(sqlstatement)
-for row in c:
-	existingPolicies[row[0]] = row[1]
+        theString = 'Policies in OpenDNSSEC:' if len(existingPolicies)>0 else 'No DNSSEC zones in OpenDNSSEC'
+        writeToSyslog(theString)
+        for exZone,exPolicy in existingPolicies.iteritems():
+                writeToSyslog('  ' + exZone + ': ' + exPolicy)
 
-c.close()
-conn.close()
+        ## handle new zones or changed policies
+        for mmZone,mmPolicy in mmPolicies.iteritems():
+                if mmZone not in existingPolicies:
+                        addNewZone(mmZone,mmPolicy)
+                elif mmPolicy != existingPolicies[mmZone]:
+                        changePolicy(mmZone,mmPolicy)
 
+        ## handle deleted zones
+        for exZone,exPolicy in existingPolicies.iteritems():
+                if exZone not in mmPolicies:
+                        removeZone(exZone)
+                ## we have already handled changed policy
 
-#fetch Men and Mice DNSSEC marked zones
-cli = soapCLI.mmSoap(proxy=proxyServer,server=centralServer,username=username,password=password)
-cli.SetCurrentAddressSpace(addressSpaceRef='<Default>')
-thisAuthority = thisServerName.rstrip('.') + '.'
-dnssecZones = cli.GetDNSZones(filter= DNSSECMMPropName + ':1 authority:' + thisAuthority)
-dnssecZones = dnssecZones.dnsZones.dnsZone if dnssecZones.dnsZones else []
+        #regenerate list of notify servers
+        dnsServers = cli.GetDNSServers().dnsServers.dnsServer
 
-# filter DNSSEC property in case the SOAP filter failes
-# TODO: check why the SOAP filter sometimes fails
-dnssecZones = [z for z in dnssecZones if getPropertyValue(z.customProperties,DNSSECMMPropName) == '1']
+        serverAddresses = []
+        for server in dnsServers:
+                if server.name.rstrip('.') != thisServerName.rstrip('.') and 'resolvedAddress' in server and server.resolvedAddress not in serverAddresses:
+                        serverAddresses.append(server.resolvedAddress)
+        if len(serverAddresses) > 0:
+                serverFile = open(theSlaveServersListFile,'w')
+                for serveraddr in serverAddresses:
+                        serverFile.write(serveraddr + '\n')                
+                serverFile.close()
+                writeToSyslog('Regenerated list of slave servers to ' + theSlaveServersListFile)
+        else:
+                os.unlink(theSlaveServersListFile)
+                writeToSyslog('WARNING: no slave servers found in configuration')
 
-mmPolicies = {}
-for zone in dnssecZones:
-	policy=getPropertyValue(zone.customProperties,PolicyMMPropName) if zone.customProperties else None
-	mmPolicies[zone.name.rstrip('.')]=policy.strip() if policy is not None else defaultPolicy
-	
-#echo all what was found here
-theString  = 'Policies in Men and Mice:' if len(mmPolicies)>0 else 'No DNSSEC zones in Men and Mice' 
-writeToSyslog(theString)
-for mmZone,mmPolicy in mmPolicies.iteritems():
-	writeToSyslog('  ' + mmZone + ': ' + mmPolicy) 
+        #regenerate custom fields in Men and Mice with current policies
+        conn = sqlite3.connect(databasefile)
+        c = conn.cursor()
 
+        policies=[]
+        sqlpolicy='select name from policies'
+        c.execute(sqlpolicy)
+        for row in c:
+                policies.append(row[0])
+        policies.sort()
 
-theString = 'Policies in OpenDNSSEC:' if len(existingPolicies)>0 else 'No DNSSEC zones in OpenDNSSEC'
-writeToSyslog(theString)
-for exZone,exPolicy in existingPolicies.iteritems():
-	writeToSyslog('  ' + exZone + ': ' + exPolicy)
+        c.close()
+        conn.close()
 
-
-## handle new zones or changed policies
-for mmZone,mmPolicy in mmPolicies.iteritems():
-	if mmZone not in existingPolicies:
-		addNewZone(mmZone,mmPolicy)
-	elif mmPolicy != existingPolicies[mmZone]:
-		changePolicy(mmZone,mmPolicy)
-
-
-## handle deleted zones
-for exZone,exPolicy in existingPolicies.iteritems():
-	if exZone not in mmPolicies:
-		removeZone(exZone)
-	## we have already handled changed policy
-	
-	
-
-#regenerate list of notify servers
-dnsServers = cli.GetDNSServers().dnsServers.dnsServer
-
-serverAddresses = []
-for server in dnsServers:
-	if server.name.rstrip('.') != thisServerName.rstrip('.') and 'resolvedAddress' in server and server.resolvedAddress not in serverAddresses:
-		serverAddresses.append(server.resolvedAddress)
-if len(serverAddresses) > 0:
-        serverFile = open(theSlaveServersListFile,'w')
-        for serveraddr in serverAddresses:
-                serverFile.write(serveraddr + '\n')                
-        serverFile.close()
-        writeToSyslog('Regenerated list of slave servers to ' + theSlaveServersListFile)
-else:
-        os.unlink(theSlaveServersListFile)
-        writeToSyslog('WARNING: no slave servers found in configuration')
-
-#regenerate custom fields in Men and Mice with current policies
-conn = sqlite3.connect(databasefile)
-c = conn.cursor()
-
-policies=[]
-sqlpolicy='select name from policies'
-c.execute(sqlpolicy)
-for row in c:
-	policies.append(row[0])
-policies.sort()
-
-c.close()
-conn.close()
-
-propDefs = cli.GetPropertyDefinitions(objType='DNSZone').propertyDefinition
-thePropDef = None
-for propDef in propDefs:
-	if not propDef.system and propDef.name == PolicyMMPropName:
-		thePropDef = propDef
-		defListItems = propDef.listItems.string if thePropDef.listItems and thePropDef.listItems.string else []
-		defListItems.sort()
-		if defListItems != policies:
-			thePropDef.listItems.string = policies
-			cli.ModifyPropertyDefinition(objType='DNSZone',property=PolicyMMPropName,propertyDefinition=thePropDef,saveComment=thePolicyListUpdateSaveComment)
-			writeToSyslog('Updated list of policies in Men and Mice "%s" custom field.' % (PolicyMMPropName))
-		break
-		
-		
-# set the last sign date and next expiry date
-for zone in dnssecZones:
-	updateSigningDatesCPs(zone)
-	
-
-
-	
+        propDefs = cli.GetPropertyDefinitions(objType='DNSZone').propertyDefinition
+        thePropDef = None
+        for propDef in propDefs:
+                if not propDef.system and propDef.name == PolicyMMPropName:
+                        thePropDef = propDef
+                        defListItems = propDef.listItems.string if thePropDef.listItems and thePropDef.listItems.string else []
+                        defListItems.sort()
+                        if defListItems != policies:
+                                thePropDef.listItems.string = policies
+                                cli.ModifyPropertyDefinition(objType='DNSZone',property=PolicyMMPropName,propertyDefinition=thePropDef,saveComment=thePolicyListUpdateSaveComment)
+                                writeToSyslog('Updated list of policies in Men and Mice "%s" custom field.' % (PolicyMMPropName))
+                        break
+				
+                # set the last sign date and next expiry date
+                for zone in dnssecZones:
+                        updateSigningDatesCPs(zone)
