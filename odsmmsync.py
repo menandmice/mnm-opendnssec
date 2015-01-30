@@ -1,4 +1,32 @@
 #! env python2
+# Copyright (C) 2011-2015 Men & Mice
+#
+# Permission to use, copy, modify, and/or distribute this software for any
+# purpose with or without fee is hereby granted, provided that the above
+# copyright notice and this permission notice appear in all copies.
+#
+# THE SOFTWARE IS PROVIDED "AS IS" AND MEN & MICE DISCLAIMS ALL WARRANTIES WITH
+# REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+# AND FITNESS. IN NO EVENT SHALL MEN & MICE BE LIABLE FOR ANY SPECIAL, DIRECT,
+# INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+# LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+# OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+# PERFORMANCE OF THIS SOFTWARE.
+"""
+This is a sync-script for syncing an OpenDNSSEC server running on a
+hidden master with Men and Mice.  It relies on cron job, not the M&M
+script triggers which can only be run on the Central machine.  When
+the script is run it compares the contents of OpenDNSSEC with what Men
+and Mice has, and adds and/or removes to OpenDNSSEC accordingly. It
+also updates the custom field list for OpenDNSSEC policies in Men and
+Mice, and writes down the list of servers configured in Men and Mice,
+which are going to be notified by the reload script.
+
+Author: Men & Mice Services team - services@menandmice.com
+Version: 1.2
+Date: 2015-01-30
+"""
+
 import sqlite3,sys,os,soapCLI,syslog,re,datetime
 from shutil import copy2
 
