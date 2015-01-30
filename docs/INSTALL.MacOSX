@@ -1,0 +1,54 @@
+# Installation on MacOS X #
+
+This document describes the OpenDNSSEC integration for the Men & Mice
+Suite on MacOS X.
+
+This steps were tested using the Men & Mice Suite 6.7.5, BIND
+9.9.6-P1, OpenDNSSEC 1.4.6 on MacOS X 10.9.
+
+It is recommended to run the DNS Management System containing the Men
+& Mice Suite and OpenDNSSEC as a "hidden-primary" DNS Server, e.g. a
+DNS Server that is not listed in the zones NS-Records and is not
+reachable from the public Internet. The signed DNS zone should be
+transferred by DNS zonetransfer to DNS-secondaries (DNS slave servers)
+that serve the zone on public IP-Addresses in the Internet.
+
+# Install BIND 9 #
+
+Apple MacOS X starting with version 10.9 does not contain the BIND 9
+DNS server anymore. BIND 9 needs to be installed from an external
+source.
+
+You can compile BIND 9 from the sources ( download from
+https://www.isc.org ) or use the pre-compiled installer packages
+provided by Men & Mice (
+http://packages.menandmice.com/bind/macosx/10.7-Lion/ ). The BIND 9
+packages provided by Men & Mice are not part of the Men & Mice Suite
+product and are provided "AS-IS" without support or
+warranties. Customers that require a supported version of BIND 9 can
+purchase a support contract (independend from the Men & Mice Suite)
+from Men & Mice or ISC.
+
+Create a basic BIND 9 configuration file and configure one or two DNS
+zones. Test the configuration with "named-checkconf -z".
+
+# Install the Men & Mice Suite #
+
+Download and install the Men & Mice Suite DNS-Server Controller on the
+MacOS X System. Connect the DNS Server to the Men & Mice Central. The
+Men & Mice Central service can run on the same machine or on some
+other machine on the network. Please be aware that Microsoft
+Active-Directory authentication is only possible with Men & Mice
+Central running on a Microsoft Windows system that is part of the
+Active Directory Domain.
+
+Make sure that you can view and edit the DNS Zones on the DNS-Server
+from within the Men & Mice GUI.
+
+As the Men & Mice User "Administrator" create 4 new "Custom
+Properties" on the "zone" object:
+
+ * DNSSEC - Type YES/NO - this field holds the information whether the
+ zone should be DNSSEC signed
+ 
+TO BE CONTINUED ...
