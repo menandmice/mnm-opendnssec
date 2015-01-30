@@ -1,0 +1,24 @@
+[opendnssec]
+database-file: /var/opendnssec/kasp.db
+default-policy: default
+signed-zones-dir: /var/opendnssec/signed
+unsigned-zones-dir: /var/opendnssec/unsigned
+work-dir: /var/opendnssec/tmp
+path-to-odsksmutil: /usr/local/bin/ods-ksmutil
+
+[menandmicesuite]
+proxy-server: mmcentral.example.com
+central-server: mmcentral.example.com
+username: administrator
+password: administrator
+master-dnsserver: dns1.example.com
+dnssec-property-name: DNSSEC
+policy-property-name: DNSSEC Policy
+last-signed-property-name: Last Signed Date
+next-expiry-property-name: Next Expiry Date
+policy-list-update-save-comment: OpenDNSSEC integration script. Maintenance.
+
+[bind9]
+master-zones-dir: /var/named/hosts/masters
+script-dir: /var/named/scripts
+slave-servers-list: /var/named/scripts/nameservers.lst

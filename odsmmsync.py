@@ -30,30 +30,6 @@ Date: 2015-01-30
 import sqlite3,sys,os,soapCLI,syslog,re,datetime,ConfigParser
 from shutil import copy2
 
-
-# user section === defaults === modify as needed =========================================
-databasefile='/var/opendnssec/kasp.db'
-proxyServer = 'mmcentral.example.com'
-centralServer=proxyServer
-username='administrator'
-password='administrator'
-thisServerName='dns1.example.com' #the name of the server as named in Men and Mice
-defaultPolicy=u'default'
-theSourceDir = '/var/named/hosts/masters/'
-theDestDir = '/var/opendnssec/signed/'
-theUnsignedDir = '/var/opendnssec/unsigned/'
-theWorkingDir = '/var/opendnssec/tmp/'
-DNSSECMMPropName = 'DNSSEC'
-PolicyMMPropName = 'DNSSEC Policy'
-lastSignedMMPropName = 'Last Signed Date'
-nextExpiryMMPropName = 'Next Expiry Date'
-thePolicyListUpdateSaveComment = 'OpenDNSSEC integration script. Maintainence.'
-thisProcessName='[odsmmsync]' #will be prefixed to syslog messages
-odsksmutil = '/usr/local/bin/ods-ksmutil'
-# ========================================================================================
-theScriptDir = '/var/named/scripts/' #careful: all scripts must be here, including the reloadscript.sh
-theSlaveServersListFile = theScriptDir + 'nameservers.lst' #careful: must be changed in the reload script as well
-
 thisViewName = '' #the name of the view, empty string for non-views setup (currently, only '' is supported)
 sqlstatement='select z.name as zone,p.name as policy from zones as z join policies as p on p.id=z.policy_id;'
 
@@ -221,9 +197,35 @@ def intToDateStr (theInt):
 	return datetime.datetime.strptime(str(theInt),'%Y%m%d%H%M%S').strftime('%Y-%m-%d %H:%M:%S') if theInt else ''
 
 
+# main body
 if __name__ == "__main__":
         config = ConfigParser.ConfigParser()
         config.read('odsmmsync.cfg')
+        # read configuration file
+        theSourceDir                   = config.get("bind9","master-zones-dir")
+
+        proxyServer                    = config.get("menandmicesuite","proxy-server")
+        centralServer                  = config.get("menandmicesuite","central-server")
+        username                       = config.get("menandmicesuite","username")
+        password                       = config.get("menandmicesuite","password")
+        thisServerName                 = config.get("menandmicesuite","master-dnsserver")
+        DNSSECMMPropName               = config.get("menandmicesuite","dnssec-property-name")
+        PolicyMMPropName               = config.get("menandmicesuite","policy-property-name")
+        lastSignedMMPropName           = config.get("menandmicesuite","last-signed-property-name")
+        nextExpiryMMPropName           = config.get("menandmicesuite","next-expiry-property-name")
+        thePolicyListUpdateSaveComment = config.get("menandmicesuite","policy-list-update-save-comment")
+
+        defaultPolicy                  = config.get("opendnssec","default-policy")        
+        databasefile                   = config.get("opendnssec","database-file")
+        theDestDir                     = config.get("opendnssec","signed-zones-dir")
+        theUnsignedDir                 = config.get("opendnssec","unsigned-zones-dir")
+        theWorkingDir                  = config.get("opendnssec","work-dir")
+        odsksmutil                     = config.get("opendnssec","path-to-odsksdmutil")
+        
+        thisProcessName                = config.get("odsmmsync","syslog-process-tag")
+        theScriptDir                   = config.get("odsmmsync","script-dir")
+        theSlaveServersListFile        = config.get("odsmmsync","slave-servers-list")
+
 
         #fetch existing opendnssec zones
         conn = sqlite3.connect(databasefile)
