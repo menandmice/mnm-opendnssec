@@ -7,8 +7,8 @@ work-dir: /var/opendnssec/tmp
 path-to-odsksmutil: /usr/local/bin/ods-ksmutil
 
 [menandmicesuite]
-proxy-server: mmcentral.example.com
-central-server: mmcentral.example.com
+proxy-server: webui.example.com
+central-server: central.example.com
 username: administrator
 password: administrator
 master-dnsserver: dns1.example.com
@@ -20,5 +20,8 @@ policy-list-update-save-comment: OpenDNSSEC integration script. Maintenance.
 
 [bind9]
 master-zones-dir: /var/named/hosts/masters
+
+[odsmmsync]
+syslog-process-tag: [odsmmsync]
 script-dir: /var/named/scripts
 slave-servers-list: /var/named/scripts/nameservers.lst
