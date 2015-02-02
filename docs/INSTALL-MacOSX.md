@@ -48,7 +48,53 @@ from within the Men & Mice GUI.
 As the Men & Mice User "Administrator" create 4 new "Custom
 Properties" on the "zone" object:
 
- * DNSSEC - Type YES/NO - this field holds the information whether the
+ * "DNSSEC" - Type YES/NO - this field holds the information whether the
  zone should be DNSSEC signed
+ * "DNSSEC Policy" - Type "text" - this field holds the DNSSEC policy
+ selected for this zone
+ * "Last Signed Date" - Type "text" - this field holds the information
+ when the zone has last been signed by OpenDNSSEC
+ * "Next Expiry Date" - Type "text" - this field holds the closted
+ RRSIG expiry date of the zone 
+
+The Men & Mice - OpenDNSSEC integration script "odsmmsync.py" uses the
+Men & Mice SOAP API calls. The SOAP API is provided by the Men & Mice
+Web-UI component. Install the Men & Mice Web-UI component on some
+machine in the network. A good place is the machine that is also
+running the Men & Mice Central service. For security reasons, the Men
+& Mice Web-UI should not be installed on a system that is exposed to
+the Internet.
+
+# Install the sync script #
+
+Install the sync script into a directory inside the search-path of the
+user that will run the sync script. The sync script must be able to
+read and write the zonefile, so it must be either be executed with the
+user-account of the BIND 9 DNS-Server, or with the "root"
+superuser. Make sure the file has the executable permission bit set:
+
+    # cp odsmmsync.py /usr/local/bin
+    # chmod +x /usr/local/bin/odsmmsync.py
+
+Copy the configuration file into the "/etc" directory. Adjust the
+configurationfile to fit your installation. Refer to the
+"Configuration" file in the "docs" folder for detail information on
+the configuration option.
+
+Run the sync script "odsmmsync.py" script manually to test the setup:
+
+    MacBook-Pro% ./odsmmsync.py
+    [odsmmsync]: reading from configuration file /etc/odsmmsync.cfg
+    [odsmmsync]: Policies in Men and Mice:
+    [odsmmsync]:   test.example: default
+    [odsmmsync]:   example.com: default
+    [odsmmsync]:   testing.example: default
+    [odsmmsync]: Policies in OpenDNSSEC:
+    [odsmmsync]:   test.example: default
+    [odsmmsync]:   example.com: default
+    [odsmmsync]:   testing.example: default
+    [odsmmsync]: WARNING: no slave servers found in configuration
+
+
+
  
-TO BE CONTINUED ...
