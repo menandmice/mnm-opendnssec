@@ -34,6 +34,31 @@
     next-expiry-property-name: Next Expiry Date
     policy-list-update-save-comment: OpenDNSSEC integration script. Maintenance.
 
+ * proxy-server - hostname or IP-address of the machine running the
+ Men & Mice Web-UI (containing the SOAP-API proxy)
+ * central-server - hostname or IP-address of the machine running the
+ Men & Mice Central service
+ * username - Username of the user connecting to the Men & Mice
+   system. For security reasons, it is recommended to create a
+   dedicated user for the odsmmsync.py script with limited rights
+ * password - password of the user connecting to the Men & Mice system
+ * master-dnsserver - hostname of the DNS server containing the master
+   DNS zones to be DNSSEC signed. This name must match the DNS
+   servers name in the Men & Mice Suite
+ * dnssec-property-name - name of the custom property field containing
+   the boolean YES/NO value marking a DNSSEC signed zone
+ * policy-property-name - name of the custom property field containing
+   a text field with a prefilled list of OpenDNSSEC policy names
+ * last-signed-property-name - name of a custom property containing
+   the date and time of the last DNSSEC signing event for this zone
+ * next-expirey-property-name - name of a custom property containing
+   the date and time of the next RRSIG record expiry
+ * policy-list-update-save-comment - comment text to be written to the
+   Men & Mice Audit log when the script updates the list of DNSSEC
+   policies from the OpenDNSSEC database
+   
+
+
 # Section: bind9 #
 
     [bind9]
