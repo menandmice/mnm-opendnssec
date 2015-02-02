@@ -81,6 +81,13 @@ configurationfile to fit your installation. Refer to the
 "Configuration" file in the "docs" folder for detail information on
 the configuration option.
 
+Copy the "reloadscript.sh" file into the script directory
+"/var/named/scripts"  and make it executable:
+
+    # mkdir -p /var/named/scripts
+    # cp reloadscript.sh /var/named/scripts
+    # chmod +x /var/named/scripts/reloadscript.sh
+
 Run the sync script "odsmmsync.py" script manually to test the setup:
 
     MacBook-Pro% ./odsmmsync.py
