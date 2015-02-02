@@ -96,5 +96,38 @@ Run the sync script "odsmmsync.py" script manually to test the setup:
     [odsmmsync]: WARNING: no slave servers found in configuration
 
 
+# periodic execution of the script #
 
+Create a property list (plist) file for MacOS X "launchd" to execute
+the script in intervals between 5 and 60 minutes (depending on the
+size of your environment and the duration of one script run).
+
+Here is one example script:
+
+    <?xml version="1.0" encoding="UTF-8"?>
+    <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+    <plist version="1.0">
+    <dict>
+        <key>Label</key>
+        <string>com.menandmice.odsmmsync</string>
+        <key>ProgramArguments</key>
+        <array>
+            <string>/usr/local/bin/odsmmsync.py</string>
+        </array>
+        <key>StartInterval</key>
+        <integer>3600</integer>
+    </dict>
+    </plist>
+ 
+ load the property list into launchd:
+
+    launchctl load  ~/Library/LaunchAgents/com.menandmice.odsmmsync.plist
+
+Additional information on periodic execution of script in MacOS X can
+be found at
+
+ * Schedule jobs using launchd
+   <http://nathangrigg.net/2012/07/schedule-jobs-using-launchd/>
+ * Mac crontab - Mac OS X startup jobs with crontab, er, launchd
+ <http://alvinalexander.com/mac-os-x/mac-osx-startup-crontab-launchd-jobs>
  
