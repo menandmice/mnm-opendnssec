@@ -64,6 +64,9 @@
     [bind9]
     master-zones-dir: /var/named/hosts/masters
 
+ * master-zones-dir - directory where BIND 9 looks for master
+ zone-files
+ 
 # Section: odsmmsync # 
 
     [odsmmsync]
@@ -71,3 +74,13 @@
     script-dir: /var/named/scripts
     slave-servers-list: /var/named/scripts/nameservers.lst
 
+ * syslog-process-tag - text that is printed as a tag for all log
+ messages send to syslog
+ * script-dir - directory for the Men & Mice DNS shell scripts, this
+   is the place where the "reloadscript.sh" needs to be in
+ * slave-server-list - textfile to be written by "odsmmsync.py" and
+   read by "reloadscript.sh". The directory must exist and must be
+   writeable by the script. The file will contain the list of all
+   slave-servers that need to receive a notify once the zone is
+   changed or DNSSEC (re-)signed
+   
