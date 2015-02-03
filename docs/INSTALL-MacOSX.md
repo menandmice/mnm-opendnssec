@@ -88,6 +88,32 @@ Copy the "reloadscript.sh" file into the script directory
     # cp reloadscript.sh /var/named/scripts
     # chmod +x /var/named/scripts/reloadscript.sh
 
+Add the reloadscript.sh to the OpenDNSSEC configuration (in /etc/opendnssec/conf.xml):
+
+    <NotifyCommand>/var/named/scripts/reloadscript.sh %zonefile %zone</NotifyCommand>
+
+and reload the OpenDNSSEC configuration
+
+    MacBook-Pro# ods-ksmutil update all
+    zonelist filename set to /etc/opendnssec/zonelist.xml.
+    kasp filename set to /etc/opendnssec/kasp.xml.
+    Repository SoftHSM found
+    No Maximum Capacity set.
+    RequireBackup NOT set; please make sure that you know the potential problems of using keys which are not recoverable
+    INFO: The XML in /etc/opendnssec/conf.xml is valid
+    INFO: The XML in /etc/opendnssec/zonelist.xml is valid
+    INFO: The XML in /etc/opendnssec/kasp.xml is valid
+    WARNING: In policy default, Y used in duration field for Keys/KSK Lifetime (P1Y) in /etc/opendnssec/kasp.xml - this will be interpreted as 365 days
+    WARNING: In policy lab, Y used in duration field for Keys/KSK Lifetime (P1Y) in /etc/opendnssec/kasp.xml - this will be interpreted as 365 days
+    Policy default found
+    Info: converting P1Y to seconds; M interpreted as 31 days, Y interpreted as 365 days
+    Policy lab found
+    Info: converting P1Y to seconds; M interpreted as 31 days, Y interpreted as 365 days
+    Zone example.com found; policy set to default
+    Zone test.example found; policy set to default
+    Zone testing.example found; policy set to default
+    Notifying enforcer of new database...
+
 Run the sync script "odsmmsync.py" script manually to test the setup:
 
     MacBook-Pro% ./odsmmsync.py
