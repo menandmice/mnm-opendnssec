@@ -32,6 +32,20 @@ from Men & Mice or ISC.
 Create a basic BIND 9 configuration file and configure one or two DNS
 zones. Test the configuration with "named-checkconf -z".
 
+The BIND 9 DNS servers should not send DNS notify to the slave servers
+when the zone is updated, as this could transfer unsigned data to the
+slave servers. The BIND 9 configuration option block should disable
+all automatic notify processing with
+
+    options {
+       notify no;
+	[...]
+	};
+
+The notify messages are send from the reload script to all slave
+servers configured in the Men & Mice Suite for the zone from the
+reload script (see below).
+
 # Install the Men & Mice Suite #
 
 Download and install the Men & Mice Suite DNS-Server Controller on the
