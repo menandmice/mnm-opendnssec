@@ -1,6 +1,6 @@
 #!/bin/bash
-
-logger "named reload script: copy $1 and reloading $2"
+SOANUM=$(cat $1 | grep SOA | head -1 | cut -f 3 -d ' ')
+logger -t odsmmsync "named reload script: copy $1 and reloading $2"
 cp $1 /var/named/hosts/masters/$2-hosts
 cp $1 /var/opendnssec/unsigned/$2
 cp $1 /var/opendnssec/unsigned/$2.axfr
@@ -10,15 +10,7 @@ sleep 5
 rndc reload $2
 sleep 5
 
-SEQ=/usr/bin/seq
+# sending notify to all secondary name servers
+cat /var/named/scripts/nameservers.lst | xargs sh -c logger -d odsmmsync  "sending notify to "
+cat /var/named/scripts/nameservers.lst | xargs ldns-notify -r 1 -s $SOANUM -z $2 2>&1 >/dev/null
 
-nameserverlist="/var/named/scripts/nameservers.lst"
-if [ -s $(nameserverlist) ]; then
-    nameservers=( $( < $(nameserverlist) ) )
-    for i in $($SEQ 0 $((${#nameservers[@]} - 1)))
-    do
-	logger "sending notify to ${nameservers[$i]} ..."
-	ldns-notify -r 1 -z $2 ${nameservers[$i]} 2>&1 1>/dev/null
-    done
-fi
-exit 0
